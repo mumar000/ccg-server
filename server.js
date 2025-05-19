@@ -4,13 +4,13 @@ import axios from "axios";
 import cors from "cors";
 dotenv.config();
 
+const app = express();
 app.use(
   cors({
     origin: ["http://localhost:5173", "https://ccg-ebook.netlify.app"],
     credentials: true,
   })
 );
-const app = express();
 const PORT = process.env.PORT || 5002;
 
 app.use(express.json());
