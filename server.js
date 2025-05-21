@@ -21,7 +21,7 @@ app.get("/", (req, res) => {
 
 // Handle email subscriptions
 app.post("/api/subscribe", async (req, res) => {
-  const { email } = req.body;
+  const { email, firstName, lastName } = req.body;
 
   if (!email) {
     return res.status(400).json({ error: "Please provide an email address" });
@@ -39,6 +39,10 @@ app.post("/api/subscribe", async (req, res) => {
       {
         email_address: email,
         status: "subscribed",
+        merge_fields: {
+          FNAME: firstName || "",
+          LNAME: lastName || "",
+        },
       },
       {
         auth: {
@@ -52,14 +56,13 @@ app.post("/api/subscribe", async (req, res) => {
     res.json({ success: true, message: "Thanks for subscribing!" });
   } catch (error) {
     // Handle errors
-    console.log("Subscription error:", error.message);
-
-    let errorMessage = "Something went wrong";
-    if (error.response?.data?.title === "Member Exists") {
-      errorMessage = "This email is already subscribed";
+    if (error.response?.data?.title === "API Key Invalid") {
+      console.log("API Key is disabled or invalid.");
+      return res.status(401).json({ error: "Invalid Mailchimp API Key." });
+    } else {
+      console.log("Subscription error:", error.response?.data);
+      return res.status(400).json({ error: "Subscription failed." });
     }
-
-    res.status(400).json({ error: errorMessage });
   }
 });
 
