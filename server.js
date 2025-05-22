@@ -7,7 +7,12 @@ dotenv.config();
 const app = express();
 app.use(
   cors({
-    origin: ["http://localhost:5173", "https://ccg-ebook.netlify.app"],
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:5000",
+      "https://ccgconsultants.org",
+      "https://ccg-ebook.netlify.app",
+    ],
     credentials: true,
   })
 );
