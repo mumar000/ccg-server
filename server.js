@@ -4,7 +4,14 @@ import axios from "axios";
 import cors from "cors";
 import Stripe from 'stripe';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
 dotenv.config();
+
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 const app = express();
 
@@ -143,6 +150,43 @@ app.post("/update-payment-amount", async (req, res) => {
 });
 
 
+
+app.get("/secure-download-ebook", async (req, res) => {
+  const paymentIntentId = req.query.payment_intent_id;
+
+  if (!paymentIntentId) {
+    return res.status(400).send("Missing payment confirmation.");
+  }
+
+  try {
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === 'succeeded') {
+      const ebookFileNameInPrivateFolder = 'Top Funders of 2025.pdf';
+      const ebookFilePath = path.join(__dirname, 'private_content', ebookFileNameInPrivateFolder);
+
+      const userDownloadFileName = 'Top-Funders-of-2025.pdf';
+
+      res.download(ebookFilePath, userDownloadFileName, (err) => {
+        if (err) {
+          console.error("Error sending ebook file:", err);
+          if (!res.headersSent) {
+            res.status(500).send("Could not download the ebook. Please try again later or contact support.");
+          }
+        } else {
+          console.log("Ebook downloaded successfully for PI:", paymentIntentId);
+        }
+      });
+
+    } else {
+      console.warn("Download attempt for non-succeeded PI:", paymentIntentId, "Status:", paymentIntent.status);
+      res.status(403).send("Payment not confirmed. Access to ebook denied.");
+    }
+  } catch (error) {
+    console.error("Error verifying payment for ebook download:", error);
+    res.status(500).send("Error verifying your purchase. Please try again or contact support.");
+  }
+});
 
 // Start the server
 app.listen(PORT, () => {
